@@ -1,0 +1,13 @@
+<?xml version = "1.0" encoding ="UTF-8" ?>
+<register>
+	<login>
+		<username>admin</username>
+		<password>admin</password>
+	</login>
+	
+	<login>
+		<username>software</username>
+		<password>engineering</password>
+	</login>
+</register>
+

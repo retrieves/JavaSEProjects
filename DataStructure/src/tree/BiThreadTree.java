@@ -1,0 +1,129 @@
+package tree;
+/**
+ * 中序线索化二叉树
+ * 构造方式是按照先序遍历构造出来
+ * 然后中序线索化
+ * 最后可以采用中序遍历方式进行遍历
+ * 
+ * @author New Song
+ *
+ * @param <E>
+ */
+enum PointerTag{
+	Link,Thread
+}
+
+public class BiThreadTree<E extends Comparable<E>> {
+	private ThreadTreeNode<E> head;
+	private ThreadTreeNode<E> root;
+	private ThreadTreeNode<E> pre;
+	private static int index = -1;
+	
+	public BiThreadTree(ThreadTreeNode<E> root) {
+		this.root = root;
+	}
+	
+	//按照先序遍历方式构造一个普通的二叉树，没有线索化
+	//注意，index 必须是全局变量/静态变量，如果是局部变量，那么在递归调用中，即使index值修改，也会在返回的时候变为原来的值（每次返回时所有局部变量出栈，恢复值）
+	//pre也是这样，凡是需要永久保存变量的修改值的情况，都需要将该变量设置为全局遍历
+	public static BiThreadTree<Character> createThreadTree(String preStr){
+		char[] pre = preStr.toCharArray();
+		BiThreadTree<Character> tree = new BiThreadTree<>(createSubTree(pre)) ;
+		index = -1;
+		return tree;
+	}
+	
+	private static ThreadTreeNode<Character> createSubTree(char[] pre){
+		index++;
+		ThreadTreeNode<Character> subTree = null;
+		if(pre[index] == '#'){
+			subTree = null;
+		}else{
+			subTree = new ThreadTreeNode<>(pre[index]);
+			subTree.Lchild = createSubTree(pre);
+			subTree.Rchild = createSubTree(pre);
+		}
+		return subTree;
+	}
+	
+	//中序遍历
+	public void inOrderThreadTraverse(){
+		ThreadTreeNode<E> node = head.Lchild;
+		while(node != head){
+			//node 指向根节点，根据中序遍历的规则，先移动到左子树的最底端
+			while(node.LTag == PointerTag.Link){
+				node = node.Lchild;
+			}
+			System.out.print(node.data+" ");
+			//按照链表的方式进行遍历
+			while(node.RTag == PointerTag.Thread && node.Rchild != head){
+				node = node.Rchild; //相当于node = node.next
+				System.out.print(node.data+" ");
+				//注意在这里要先移至右子树，再访问
+				//如果先访问再移至右子树，那么如果不能进入下次循环，就无法访问这个右子树结点了
+			}
+			//此时要么已经遍历完毕，要么其右子树存在，需要继续移动到左子树的最底端
+			node = node.Rchild;
+		}
+	}
+	
+	//线索化，中序遍历
+	public void inThreading(ThreadTreeNode<E> node){
+		if(node != null){
+			inThreading(node.Lchild);
+			//进入到左子树的最底端
+			if(node.Lchild == null){
+				node.LTag = PointerTag.Thread;
+				node.Lchild = pre;
+			}
+			//左子树在当前调用中进行处理，右子树在下次调用中进行处理
+			//head的Rchild要求一开始非空
+			if(pre.Rchild == null){
+				pre.RTag = PointerTag.Thread;
+				pre.Rchild = node;
+			}
+			pre = node;
+			inThreading(node.Rchild);
+		}
+	}
+	
+	//设置头结点并线索化
+	public void inOrderThreading(){
+		head = new ThreadTreeNode<>();
+		head.LTag = PointerTag.Link;
+		head.RTag = PointerTag.Thread;
+		head.Rchild = head;
+		//设置头结点，左指针域指向根节点，右指针域指向自身
+		if(root == null){
+			head.Lchild = head;
+		}else{
+			head.Lchild = root;
+			pre = head;
+			//pre初始值为head，方便将第一个结点的左指针域设为head
+			inThreading(root);
+			//线索化结束后pre指向最后一个结点
+			pre.RTag = PointerTag.Thread;
+			pre.Rchild = head;
+			head.Rchild = pre;
+			//建立指针链
+		}
+	}
+	public static void main(String[] args) {
+		String pre = "ABDH##I##EJ###CF##G##";
+		BiThreadTree<Character> tree = createThreadTree(pre);
+		tree.inOrderThreading();
+		tree.inOrderThreadTraverse();
+	}
+}
+class ThreadTreeNode<E extends Comparable<E>> {
+	E data;
+	ThreadTreeNode<E> Lchild;
+	ThreadTreeNode<E> Rchild;
+ 	PointerTag LTag = PointerTag.Link, RTag = PointerTag.Link;
+ 	public ThreadTreeNode() {
+	}
+ 	public ThreadTreeNode(E data) {
+ 		this.data = data;
+	}
+}
+
