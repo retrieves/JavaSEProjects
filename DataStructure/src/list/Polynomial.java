@@ -1,5 +1,9 @@
 package list;
-
+/**
+ * 一元多项式
+ * @author New Song
+ *
+ */
 public class Polynomial {
 	private Node head;
 	private Node tail;

@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.LinkedList;
 import java.util.List;
+import java.util.Stack;
 
 //分别表示有向图，有向网，无向图，无向网
 enum GraphKind {
@@ -104,6 +105,8 @@ public class MetrixGraph<E extends Comparable<E>> {
 	private LinkedList<String> path;
 	private List<Closedge> closedge;// 用于生成最小生成树的辅助数组
 
+	private int[] degree;// 保存了每个顶点的入度（有向图），用于拓扑排序；也可以保存每个结点的度（无向图）
+
 	public MetrixGraph(E[] data, GraphKind kind, int vexNum, int arcNum, boolean isNet) {
 		this.vexs = new ArrayList<>(MAX_VERTEX_NUM);
 		this.arcs = new ArcCell[MAX_VERTEX_NUM][MAX_VERTEX_NUM];
@@ -111,6 +114,7 @@ public class MetrixGraph<E extends Comparable<E>> {
 		this.visitOrder = new int[MAX_VERTEX_NUM];
 		this.low = new int[MAX_VERTEX_NUM];
 		this.closedge = new ArrayList<>(MAX_VERTEX_NUM);
+		this.degree = new int[MAX_VERTEX_NUM];
 		this.kind = kind;
 		this.vexNum = vexNum;
 		this.arcNum = arcNum;
@@ -140,6 +144,7 @@ public class MetrixGraph<E extends Comparable<E>> {
 		this.vexNum = vexs.size();
 		this.arcs = new ArcCell[MAX_VERTEX_NUM][MAX_VERTEX_NUM];
 		this.visited = new boolean[MAX_VERTEX_NUM];
+		this.degree = new int[MAX_VERTEX_NUM];
 		for (int i = 0; i < vexNum; i++) {
 			for (int j = 0; j < vexNum; j++) {
 				arcs[i][j] = new ArcCell();
@@ -350,52 +355,46 @@ public class MetrixGraph<E extends Comparable<E>> {
 	// 给出一个顶点，返回这个顶点的第一个邻接点的索引（如果存在）
 	// 如果是有向的，返回以该顶点为弧尾的第一个邻接点
 	// 如果是无向的，返回边的第一个邻接点
-	public int firstAdjVex(Vertex<E> vex) {
-		if (vex == null) {
-			return -1;
-		}
+	public Vertex<E> firstAdjVex(Vertex<E> vex) {
 		int index = locateVertex(vex.getData());
 		if (index == -1) {
-			return -1;
+			return null;
 		}
 		int adj = 0;
 		if (isNet()) {
 			adj = infinity;
 		}
-		for (int i = 0; i < arcNum; i++) {
+		for (int i = 0; i < vexNum; i++) {
 			if (arcs[index][i].adj != adj) {
 				// 如果边/弧存在
-				return i;
+				return vexs.get(i);
 			}
 		}
-		return -1;
+		return null;
 	}
 
 	// 给出一个顶点v，返回v的相对于w的下一个邻接点的索引
-	public int nextAdjVex(Vertex<E> v, Vertex<E> w) {
-		if (v == null || w == null) {
-			return -1;
-		}
+	public Vertex<E> nextAdjVex(Vertex<E> v, Vertex<E> w) {
 		int tailIndex = locateVertex(v.getData());
 		int preIndex = locateVertex(w.getData());
 		if (tailIndex == -1 || preIndex == -1) {
-			return -1;
+			return null;
 		}
 		int adj = 0;
 		if (isNet()) {
 			adj = infinity;
 		}
 		if (arcs[tailIndex][preIndex].adj == adj) {
-			return -1;
+			return null;
 		}
 		// 如果w不是v的邻接点，那么直接返回空
-		for (int i = preIndex + 1; i < arcNum; i++) {
+		for (int i = preIndex + 1; i < vexNum; i++) {
 			if (arcs[tailIndex][i].adj != adj) {
 				// 如果边/弧存在
-				return i;
+				return vexs.get(i);
 			}
 		}
-		return -1;
+		return null;
 	}
 
 	private int firstAdjVex(int index) {
@@ -406,7 +405,7 @@ public class MetrixGraph<E extends Comparable<E>> {
 		if (isNet()) {
 			adj = infinity;
 		}
-		for (int i = 0; i < arcNum; i++) {
+		for (int i = 0; i < vexNum; i++) {
 			if (arcs[index][i].adj != adj) {
 				return i;
 			}
@@ -425,7 +424,7 @@ public class MetrixGraph<E extends Comparable<E>> {
 		if (arcs[tailIndex][preIndex].adj == adj) {
 			return -1;
 		}
-		for (int i = preIndex + 1; i < arcNum; i++) {
+		for (int i = preIndex + 1; i < vexNum; i++) {
 			if (arcs[tailIndex][i].adj != adj) {
 				return i;
 			}
@@ -836,12 +835,12 @@ public class MetrixGraph<E extends Comparable<E>> {
 
 	}
 
-	// 最小生成树的Kruskal
+	// 最小生成树的Kruskal算法
 	public void miniSpanTreeOfKruskal() {
 		MetrixGraph<E> graph = new MetrixGraph<>(this.vexs, this.kind);
 		List<Edge> edges = edges();
 		Edge edge = null;
-		int edgeNum = 0;
+		int edgeCount = 0;
 		for (int i = 0; i < edges.size(); i++) {
 			edge = edges.get(i);
 			graph.insertArc(edge.fromIndex, edge.toIndex, edge.weight, null);
@@ -850,17 +849,73 @@ public class MetrixGraph<E extends Comparable<E>> {
 			} else {
 				System.out.println(
 						"建立边:顶点为" + vexs.get(edge.fromIndex) + "--" + vexs.get(edge.toIndex) + ",权值为" + edge.weight);
-				edgeNum++;
-				if (edgeNum == this.vexNum - 1) {
+				edgeCount++;
+				if (edgeCount == this.vexNum - 1) {
 					return;
 				}
 			}
 		}
 	}
 
-	// 检测图中是否存在回路
+	// 初始化度的数组，保存每个顶点作为弧头或弧尾时的弧的数目
+	private void initDegree() {
+		int adj = isNet() ? infinity : 0;
+		for (int i = 0; i < vexNum; i++) {
+			degree[i] = 0;
+		}
+		// 先进行重置
+		for (int i = 0; i < vexNum; i++) {
+			for (int j = isDirected() ? 0 : i + 1; j < vexNum; j++) {
+				// 有向的全部扫描邻接矩阵
+				// 无向的只需扫描一半，否则会重复增加度
+				if (arcs[i][j].adj != adj) {
+					degree[i]++;
+					degree[j]++;
+				}
+			}
+		}
+	}
+
+	// 检测图中是否存在回路，使用类似于拓扑排序的方式
+	// 拓扑排序只针对于有向图，对于无向图而言，使用另一种方法
+	// 如果存在回路，则必存在一个子图，是一个环路。环路中所有顶点的度>=2。
+	// 第一步：删除所有度<=1的顶点及相关的边，并将另外与这些边相关的其它顶点的度减一。
+	// 第二步：将度数变为1的顶点排入队列，并从该队列中取出一个顶点重复步骤一。
+	// 如果最后还有未删除顶点，则存在环，否则没有环。
+	// 由于有m条边，n个顶点。如果m>=n，则根据图论知识可直接判断存在环路。
 	public boolean circuitExists() {
-		return false;
+		initDegree();
+		Stack<Integer> stack = new Stack<>();
+		// 栈用来保存所有度<=1的顶点索引
+		for (int i = 0; i < vexNum; i++) {
+			if (degree[i] <= 1) {
+				// 度为0和1的顶点都入栈，都需要被删除
+				// 度为0的删除后仅仅影响vexCount，不会影响其邻接点
+				// 度为1的删除后会将其邻接点的度减一，如果邻接点的度为1，也就是原本邻接点的度为2，还没入过栈，就将其入栈
+				// 如果邻接点的度减为0，说明它肯定已经入过栈了，也就是vexCount计数过了，不能再入栈，否则就重复计数了
+				stack.push(i);
+			}
+		}
+		int index = 0;
+		int vexCount = 0;
+		// 用来记录是否将所有的顶点排序，保存排过序的顶点个数
+		while (!stack.isEmpty()) {
+			// 栈空时表示没有顶点入度为0了，此时有两种情况，一种是找不到入度为0的点，另一种是排序完毕
+			// 先随意取出一个顶点，将其所有邻接点的度-1
+			index = stack.pop();
+			vexCount++;
+			for (int i = firstAdjVex(index); i != -1; i = nextAdjVex(index, i)) {
+				degree[i]--;
+				if (degree[i] == 1) {
+					stack.push(i);
+				}
+			}
+		}
+		if (vexCount < vexNum) {
+			return true;
+		} else {
+			return false;
+		}
 	}
 
 	private List<Edge> edges() {
@@ -985,10 +1040,156 @@ public class MetrixGraph<E extends Comparable<E>> {
 		}
 		// 在最后加上这条路径的权值
 		for (int i = 0; i < vexNum; i++) {
-			// 源点和自己由于默认值为infinity，所以修改为0
+			// 源点到自己的弧的权值由于默认值为infinity，所以修改为0
 			path[i] += " 权值为" + (distance[i] != infinity ? distance[i] : 0);
 		}
 		return path;
 	}
 
+	// Floyd算法求最短路径
+	public String[][] shortestPathOfFloyd() {
+		int[][] weight = new int[vexNum][vexNum];
+		String[][] path = new String[vexNum][vexNum];
+		// 将weight矩阵赋值为邻接矩阵
+		for (int i = 0; i < vexNum; i++) {
+			for (int j = 0; j < vexNum; j++) {
+				weight[i][j] = arcs[i][j].adj;
+				path[i][j] = vexs.get(i) + "-" + vexs.get(j);
+			}
+		}
+		// 进行三重循环，外层是加入的中间顶点
+		for (int midVex = 0; midVex < vexNum; midVex++) {
+			for (int i = 0; i < vexNum; i++) {
+				if (i != midVex) {
+					for (int j = 0; j < vexNum; j++) {
+						// 自己至自己的就不必修改了
+						// 中间顶点是起点或终点的也不必修改
+						// 要求起点到中间顶点和中间顶点到终点的弧都存在
+						if (i != j && j != midVex && weight[i][midVex] != infinity && weight[midVex][j] != infinity
+								&& (weight[i][j] == infinity
+										|| (weight[i][midVex] + weight[midVex][j] < weight[i][j]))) {
+							weight[i][j] = weight[i][midVex] + weight[midVex][j];
+							path[i][j] = path[i][midVex] + "-" + vexs.get(j);
+						}
+					}
+				}
+			}
+		}
+		// 算法已结束
+		for (int i = 0; i < vexNum; i++) {
+			for (int j = 0; j < vexNum; j++) {
+				path[i][j] += " 权值为" + (weight[i][j] != infinity ? weight[i][j] : 0);
+			}
+		}
+		return path;
+	}
+
+	// 初始化入度数组，保存每个顶点作为弧头时的弧的数目
+	private void initInDegree() {
+		int adj = isNet() ? infinity : 0;
+		for (int i = 0; i < arcNum; i++) {
+			for (int j = 0; j < arcNum; j++) {
+				if (arcs[i][j].adj != adj) {
+					degree[j]++;
+				}
+			}
+		}
+	}
+
+	// 拓扑排序
+	public void topologicalSort() {
+		initInDegree();
+		Stack<Integer> stack = new Stack<>();
+		// 栈用来保存所有入度为0的顶点索引
+		for (int i = 0; i < vexNum; i++) {
+			if (degree[i] == 0) {
+				stack.push(i);
+			}
+		}
+		int index = 0;
+		int vexCount = 0;
+		// 用来记录是否将所有的顶点排序，保存排过序的顶点个数
+		while (!stack.isEmpty()) {
+			// 栈空时表示没有顶点入度为0了，此时有两种情况，一种是找不到入度为0的点，另一种是排序完毕
+			// 先随意取出一个顶点，将其所有邻接点的入度-1
+			index = stack.pop();
+			vexCount++;
+			System.out.print(vexs.get(index) + " ");
+			for (int i = firstAdjVex(index); i != -1; i = nextAdjVex(index, i)) {
+				degree[i]--;
+				if (degree[i] == 0) {
+					stack.push(i);
+				}
+			}
+		}
+		if (vexCount < vexNum) {
+			System.out.println("\r\n存在回路，未能完成排序");
+		} else {
+			System.out.println("\r\n排序完成");
+		}
+	}
+
+	// 求关键路径
+	// 前半部分是修改过的拓扑排序，后半部分是拓扑倒序遍历。
+	public String criticalPath() {
+		initInDegree();
+		Stack<Integer> inDegreeStack = new Stack<>();// 入度为0的栈
+		Stack<Integer> vexSeqStack = new Stack<>();// 拓扑序列顶点栈
+		int[] earliestTime = new int[vexNum];// 最早开始时间数组
+		int[] latestTime = new int[vexNum];// 最晚开始时间数组
+
+		for (int i = 0; i < vexNum; i++) {
+			if (degree[i] == 0) {
+				inDegreeStack.push(i);
+			}
+		}
+		int index = 0;// 执行当前顶点
+		int vexCount = 0;
+		while (!inDegreeStack.isEmpty()) {
+			index = inDegreeStack.pop();
+			vexSeqStack.push(index);
+			vexCount++;
+			for (int i = firstAdjVex(index); i != -1; i = nextAdjVex(index, i)) {
+				degree[i]--;
+				if (degree[i] == 0) {
+					inDegreeStack.push(i);
+				}
+				if (earliestTime[index] + arcs[index][i].adj > earliestTime[i]) {
+					earliestTime[i] = earliestTime[index] + arcs[index][i].adj;
+					// 取得最大值
+					// 注意i的最早开始时间是在当前顶点为index的时候求得的
+				}
+			}
+		}
+		if (vexCount < vexNum) {
+			return null;
+		}
+		for (int i = 0; i < vexNum; i++) {
+			latestTime[i] = earliestTime[vexNum - 1];
+		}
+		// 最晚开始时间全部赋为最后一个最早开始时间，以备后面的相减
+		while (!vexSeqStack.isEmpty()) {
+			index = vexSeqStack.pop();
+			for (int i = firstAdjVex(index); i != -1; i = nextAdjVex(index, i)) {
+				// 从后往前，访问每个顶点
+				// 主要目的是求出latestTime的值
+				if (latestTime[i] - arcs[index][i].adj < latestTime[index]) {
+					latestTime[index] = latestTime[i] - arcs[index][i].adj;
+					// 取得最小值
+					// index的最晚开始时间就是在当前顶点为index的时候求得的
+				}
+			}
+		}
+		StringBuilder sb = new StringBuilder();
+		for (int i = 0; i < vexNum; i++) {
+			if (earliestTime[i] == latestTime[i]) {
+				sb.append(vexs.get(i));
+				if (i != vexNum - 1) {
+					sb.append("-");
+				}
+			}
+		}
+		return sb.toString();
+
+	}
 }
