@@ -55,37 +55,37 @@ public class BiTree<E extends Comparable<E>> implements Cloneable {
 		// 调用的时候将一个null赋给了node，即使node后来不为null了也没法把引用重新赋给root
 	}
 
-	// 也是需要递归进行查找的，递归地找到合适位置后插入
+	// 也是需要递归进行查找的，递归地找到合适位置后插入，不允许有重复元素
 	private TreeNode<E> insert(TreeNode<E> node, E data) {
 		if (node == null) {
 			node = new TreeNode<E>(data);
 		} else {
 			if (data.compareTo(node.data) < 0) {
 				node.Lchild = insert(node.Lchild, data);
-			} else {
+			} else if(data.compareTo(node.data) > 0){
 				node.Rchild = insert(node.Rchild, data);
 			}
 		}
 		return node;
 	}
 
-	public TreeNode<E> find(E data) {
-		return find(root, data);
+	public TreeNode<E> search(E data) {
+		return search(root, data);
 	}
 
 	// 查找一个结点，使用递归
 	// 如果data即为当前结点的值，则返回当前结点
 	// 如果data小于当前结点，那么递归查找当前结点的左子树
 	// 否则，递归查找当前结点的右子树
-	private TreeNode<E> find(TreeNode<E> node, E data) {
+	private TreeNode<E> search(TreeNode<E> node, E data) {
 		if (node == null) {
 			return null;
 		}
 		int res = data.compareTo(node.data);
 		if (res > 0) {
-			return find(node.Rchild, data);
+			return search(node.Rchild, data);
 		} else if (res < 0) {
-			return find(node.Lchild, data);
+			return search(node.Lchild, data);
 		} else {
 			return node;
 		}
