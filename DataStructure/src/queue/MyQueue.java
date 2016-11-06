@@ -33,6 +33,14 @@ public class MyQueue<E> {
 		elements++;
 	}
 	
+	public E front(){
+		int ptr = rear;
+		for(int i = elements-1;i>=0;--i){
+			ptr = (ptr-1)% value.length;
+		}
+		return (E) value[rear];
+	}
+	
 	//³ö¶Ó
 	public E deQueue() {
 		if (isEmpty())
@@ -88,9 +96,10 @@ public class MyQueue<E> {
 		for (int i = 0; i < 20; i++) {
 			queue.enQueue(i + 1);
 		}
-		System.out.println(queue.isFull());
-		System.out.println(queue.size());
+//		System.out.println(queue.isFull());
+//		System.out.println(queue.size());
 		// queue.destroy();
 		queue.traverse();
+		System.out.println(queue.front());
 	}
 }
