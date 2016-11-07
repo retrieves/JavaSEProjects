@@ -129,6 +129,7 @@ public class Tree<E> {
 			preRoot(subTree.nextSibling);
 		}
 	}
+
 	//树的后根遍历就等价于二叉树的中序遍历
 	//先后根遍历第一棵子树，再访问根节点，然后从左至右后根遍历其他子树
 	public void postRoot(ChildSiblingNode<E> subTree) {

@@ -1,4 +1,6 @@
-/serviceImpl/
+/admin.xml
 /registerManagement/
-/service/
 /rmi/
+/runner/
+/service/
+/serviceImpl/

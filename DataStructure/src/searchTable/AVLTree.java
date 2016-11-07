@@ -30,7 +30,7 @@ public class AVLTree<E extends Comparable<E>> {
 	public int height(AVLTreeNode<E> node) {
 		return node == null ? 0 : node.height;
 	}
-
+	
 	// LL型：当对当前结点的左孩子的左子树进行插入时，需要进行单向右旋
 	// 用返回的Lchild（新的根节点）代替原来的根结点
 	private AVLTreeNode<E> rotateWithLeftChild(AVLTreeNode<E> parent) {
@@ -219,14 +219,15 @@ public class AVLTree<E extends Comparable<E>> {
 	}
 	public static void main(String[] args) {
 		AVLTree<Integer> tree = new AVLTree<>();
-		Random r = new Random();
+//		Random r = new Random();
 		int integer = 0;
-		for (int i = 0; i < 20; i++) {
-			integer = r.nextInt(20);
-			System.out.print(integer+" ");
-			tree.insert(integer);
+		for (int i = 1; i < 10; i++) {
+//			integer = r.nextInt(20);
+//			System.out.print(integer+" ");
+			tree.insert(i);
 		}
-		System.out.println();
+		tree.inOrder(tree.root());
+		/*System.out.println();
 		tree.preOrder(tree.root());
 		System.out.println();
 		tree.inOrder(tree.root());
@@ -238,7 +239,7 @@ public class AVLTree<E extends Comparable<E>> {
 		System.out.println();
 		tree.inOrder(tree.root());
 		System.out.println();
-		System.out.println(tree.search(2));
+		System.out.println(tree.search(2));*/
 	}
 }
 

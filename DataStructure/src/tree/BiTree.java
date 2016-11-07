@@ -1,6 +1,8 @@
 package tree;
 
+import java.util.ArrayDeque;
 import java.util.LinkedList;
+import java.util.Queue;
 import java.util.Stack;
 
 /**
@@ -13,10 +15,10 @@ import java.util.Stack;
 public class BiTree<E extends Comparable<E>> implements Cloneable {
 	private TreeNode<E> root;
 	private static int index = -1;
-	//用于使用先序遍历字符串建树
-	private  LinkedList<TreeNode<E>> pathList;
-	//用于输出从根节点到各个叶子结点的所有路径
-	
+	// 用于使用先序遍历字符串建树
+	private LinkedList<TreeNode<E>> pathList;
+	// 用于输出从根节点到各个叶子结点的所有路径
+
 	public BiTree() {
 	}
 
@@ -62,7 +64,7 @@ public class BiTree<E extends Comparable<E>> implements Cloneable {
 		} else {
 			if (data.compareTo(node.data) < 0) {
 				node.Lchild = insert(node.Lchild, data);
-			} else if(data.compareTo(node.data) > 0){
+			} else if (data.compareTo(node.data) > 0) {
 				node.Rchild = insert(node.Rchild, data);
 			}
 		}
@@ -158,7 +160,6 @@ public class BiTree<E extends Comparable<E>> implements Cloneable {
 			 * return 1; }
 			 */
 		}
-
 	}
 
 	// 二叉树的结点个数
@@ -368,9 +369,9 @@ public class BiTree<E extends Comparable<E>> implements Cloneable {
 			return null;
 		}
 	}
-	
-	//使用先序遍历的字符串和中序遍历的字符串建树，不依赖于空白字符/特殊字符
-	//只能创建存储字符的二叉树
+
+	// 使用先序遍历的字符串和中序遍历的字符串建树，不依赖于空白字符/特殊字符
+	// 只能创建存储字符的二叉树
 	public static BiTree<Character> preInCreateBiTree(String preStr, String inStr) {
 		char[] pre = preStr.toCharArray();
 		char[] in = inStr.toCharArray();
@@ -386,17 +387,18 @@ public class BiTree<E extends Comparable<E>> implements Cloneable {
 		if (mid != inStart) {
 			subTree.Lchild = createSubTree(pre, in, preStart + 1, inStart, mid - inStart);
 		}
-		//mid-inStart 为左子树的总数
-		if (mid != inStart + size -1 ) {
-		//两个if是为了跳过没有左子树或没有右子树的情况
-		//没有右子树就是 右子树的开始就是结束 ； 开始是mid+1 ，当mid = inStart+size-1，则 开始为 inStart+size，而结束也为它，所以没有必要创建右子树
-			subTree.Rchild = createSubTree(pre, in, preStart + 1 + (mid -inStart), mid + 1, size - (mid -inStart) - 1);
+		// mid-inStart 为左子树的总数
+		if (mid != inStart + size - 1) {
+			// 两个if是为了跳过没有左子树或没有右子树的情况
+			// 没有右子树就是 右子树的开始就是结束 ； 开始是mid+1 ，当mid = inStart+size-1，则 开始为
+			// inStart+size，而结束也为它，所以没有必要创建右子树
+			subTree.Rchild = createSubTree(pre, in, preStart + 1 + (mid - inStart), mid + 1,
+					size - (mid - inStart) - 1);
 		}
-		//size - (mid -inStart) - 1)是右子树的总数，是所有结点总数size减去左子树的总数，再减去开头创建的根节点1个
+		// size - (mid -inStart) - 1)是右子树的总数，是所有结点总数size减去左子树的总数，再减去开头创建的根节点1个
 		return subTree;
 	}
 
-	
 	private static int indexOf(char[] arr, char ch) {
 		for (int i = 0; i < arr.length; i++) {
 			if (ch == arr[i]) {
@@ -405,54 +407,143 @@ public class BiTree<E extends Comparable<E>> implements Cloneable {
 		}
 		return -1;
 	}
-	
-	//使用先序遍历字符串建树，只能创建存储字符的二叉树
-	public static BiTree<Character> createBiTree(String preStr){
+
+	// 使用先序遍历字符串建树，只能创建存储字符的二叉树
+	public static BiTree<Character> createBiTree(String preStr) {
 		char[] pre = preStr.toCharArray();
-		BiTree<Character> tree = new BiTree<>(createSubTree(pre)) ;
+		BiTree<Character> tree = new BiTree<>(createSubTree(pre));
 		index = -1;
 		return tree;
 	}
-	
-	private static TreeNode<Character> createSubTree(char[] pre){
+
+	private static TreeNode<Character> createSubTree(char[] pre) {
 		index++;
 		TreeNode<Character> subTree = null;
-		if(pre[index] == '#'){
-			subTree = null;
-		}else{
+		if (pre[index] != '#') {
 			subTree = new TreeNode<>(pre[index]);
 			subTree.Lchild = createSubTree(pre);
 			subTree.Rchild = createSubTree(pre);
 		}
 		return subTree;
 	}
-	//输出二叉树从根节点到每个叶子结点的路径
-	public void printAllBiTreePaths(){
-		if(pathList == null){
+
+	// 输出二叉树从根节点到每个叶子结点的路径
+	public void printAllBiTreePaths() {
+		if (pathList == null) {
 			pathList = new LinkedList<>();
 		}
 		printBiTreePath(root);
-		pathList.clear();;
+		pathList.clear();
+		;
 	}
-	
-	private void printBiTreePath(TreeNode<E> node){
-		if(node != null){
+
+	private void printBiTreePath(TreeNode<E> node) {
+		if (node != null) {
 			pathList.addLast(node);
-			if(node.Lchild == null && node.Rchild == null){
+			if (node.Lchild == null && node.Rchild == null) {
 				for (TreeNode<E> treeNode : pathList) {
-					System.out.print(treeNode.data+" ");
+					System.out.print(treeNode.data + " ");
 				}
 				System.out.println();
-				//输出链表从根节点到叶子的数据域
-			}else{
+				// 输出链表从根节点到叶子的数据域
+			} else {
 				printBiTreePath(node.Lchild);
 				printBiTreePath(node.Rchild);
 			}
 			pathList.removeLast();
-			//处理完当前结点，退出链表
+			// 处理完当前结点，退出链表
 		}
 	}
-	
+
+	/**
+	 * 使用tag来标记是第几次访问 tag = 0 是尚未访问 tag = 1 是已经访问过，等待最后的打印
+	 * 
+	 * @param subTree
+	 */
+	public void noRecPostOrderUseTag(TreeNode<E> subTree) {
+		Stack<StackNode<E>> stack = new Stack<>();
+		StackNode<E> stkPtr = null;
+		while (true) {
+			while (subTree != null) {
+				stkPtr = new StackNode<>(subTree, 0);
+				stack.push(stkPtr);
+				subTree = subTree.Lchild;
+			}
+			// 向左移动，并压栈
+			stkPtr = stack.pop();
+			subTree = stkPtr.ptr;
+
+			// 当tag == 1时
+			while (stkPtr.tag == 1) {// 从右子树回来
+				System.out.print(subTree.data + " ");
+				if (stack.isEmpty()) {
+					return;
+				} else {
+					stkPtr = stack.pop();
+					subTree = stkPtr.ptr;
+				}
+			}
+			// 当tag == 0时
+			// 从左子树回来
+			stkPtr.tag = 1;
+			stack.push(stkPtr);
+			subTree = subTree.Rchild;
+		}
+	}
+
+	// 层序遍历，使用queue
+	public void levelOrder() {
+		Queue<TreeNode<E>> queue = new ArrayDeque<>();
+		TreeNode<E> node = root;
+		while (node != null) {
+			System.out.print(node.data + " ");
+			if (node.Lchild != null) {
+				queue.add(node.Lchild);
+			}
+			if (node.Rchild != null) {
+				queue.add(node.Rchild);
+			}
+			if (!queue.isEmpty()) {
+				node = queue.poll();
+			} else {
+				return;
+			}
+		}
+		System.out.println();
+	}
+
+
+	public static BiTree<Character> preInCreateBiTreeUseSubString(String pre, String in) {
+		return new BiTree<Character>(createSubTreeUseSubString(pre, in));
+	}
+
+	// 这个算法更好，不使用下标，直接取子串
+	private static TreeNode<Character> createSubTreeUseSubString(String pre, String in) {
+		TreeNode<Character> subTree = null;
+		if (pre.length() == 0) {
+			return null;
+		} else {
+			subTree = new TreeNode<>(pre.charAt(0));
+			int mid = in.indexOf(pre.charAt(0));
+			subTree.Lchild = createSubTreeUseSubString(pre.substring(1, mid + 1), in.substring(0, mid));
+			subTree.Rchild = createSubTreeUseSubString(pre.substring(mid + 1), in.substring(mid + 1));
+		}
+		return subTree;
+	}
+
+}
+
+class StackNode<E extends Comparable<E>> {
+	TreeNode<E> ptr;
+	int tag;// 用于非递归后序遍历
+	// 第一次压栈tag = 0
+	// 第二次压栈tag = 1
+
+	public StackNode(TreeNode<E> ptr, int tag) {
+		this.ptr = ptr;
+		this.tag = tag;
+	}
+
 }
 
 class TreeNode<E extends Comparable<E>> {

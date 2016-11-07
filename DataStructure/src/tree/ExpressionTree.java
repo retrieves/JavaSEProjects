@@ -23,6 +23,7 @@ public class ExpressionTree {
 		}
 		return -1;
 	}
+	
 	//根据两个操作符的位置找到优先级列表中的二者的优先级
 	private static char precede(char opA,char opB){
 		return prior[indexOf(opA)][indexOf(opB)];

@@ -68,6 +68,30 @@ public class MyLinkedList<E> implements MyList<E> {
 		}
 	}
 
+	public void addBefore(E e, Node node) {
+		if (node == head) {
+			Node newNode = new Node(e, head);
+			head = newNode;
+		} else {
+			Node newNode = new Node(node.data, node.next);
+			node.data = e;
+			node.next = newNode;
+		}
+	}
+	
+	public E remove(Node node){
+		E res = node.data;
+		if(node == head){
+			head = head.next;
+		}else if(node == tail){
+			tail = null;
+		}else{
+			node.data = node.next.data;
+			node.next = node.next.next;
+		}
+		return res;
+	}
+	
 	public void addFirst(E e) {
 		Node newNode = new Node(e, head);
 		head = newNode;
@@ -232,7 +256,7 @@ public class MyLinkedList<E> implements MyList<E> {
 		// list.clear(); System.out.println(list.size); list.traverse();
 
 		System.out.println(list.contains(21));
-	//	list.clear();
+		// list.clear();
 
 		System.out.println(list.element());
 		System.out.println(list.get(19));
