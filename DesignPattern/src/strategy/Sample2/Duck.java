@@ -1,4 +1,4 @@
-package strategySample2;
+package strategy.Sample2;
 //鸭子的超类
 
 //含有所有鸭子都包含的行为swim和display

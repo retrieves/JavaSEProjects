@@ -1,4 +1,4 @@
-package strategySample1;
+package strategy.Sample1;
 
 public class Cat {
 	private int height;

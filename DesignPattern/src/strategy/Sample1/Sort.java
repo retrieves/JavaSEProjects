@@ -1,4 +1,4 @@
-package strategySample1;
+package strategy.Sample1;
 
 import java.util.Arrays;
 public class Sort {

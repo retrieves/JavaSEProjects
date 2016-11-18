@@ -1,4 +1,4 @@
-package strategySample2;
+package strategy.Sample2;
 //行为接口
 public interface QuackBehaviour {
 	void quack();
