@@ -120,6 +120,7 @@ public class Tree<E> {
 	public ChildSiblingNode<E> root(){
 		return root;
 	}
+	
 	//树的先根遍历就等价于二叉树的先序遍历
 	//先访问根节点，在按照从左至右的顺序先根遍历各个子树（子树森林）
 	public void preRoot(ChildSiblingNode<E> subTree) {
@@ -139,6 +140,7 @@ public class Tree<E> {
 			postRoot(subTree.nextSibling);
 		}
 	}
+	
 	public static void main(String[] args) {
 		String str = "#A AB AC AD CE CF FG ##";
 		Tree<Character> tree = createTree(str);
